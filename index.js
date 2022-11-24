@@ -23,6 +23,24 @@ const run = () => {
       const categories = await categoryCollection.find({}).toArray();
       res.send(categories);
     });
+    app.get("/myProducts", async (req, res) => {
+      const myProducts = await productsCollection
+        .find({ sellerEmail: req.query.email })
+        .toArray();
+      res.send(myProducts);
+    });
+    app.get("/users", async (req, res) => {
+      const role = req.query.role;
+      const users = await usersCollection.find({ role: role }).toArray();
+      res.send(users);
+    });
+    app.get("/category/:id", async (req, res) => {
+      const id = req.params.id;
+      const products = await productsCollection
+        .find({ categoryId: id })
+        .toArray();
+      res.send(products);
+    });
     app.post("/users/:email", async (req, res) => {
       const email = req.params.email;
       const oldUser = await usersCollection.findOne({ email: email });
