@@ -25,27 +25,19 @@ const run = () => {
     });
     app.post("/users/:email", async (req, res) => {
       const email = req.params.email;
-      const newUser = req.body;
-      const result = await usersCollection.insertOne(newUser);
-      const token = await jwt.sign({ email }, process.env.DealX_Token, {
-        expiresIn: "7d",
-      });
-      console.log(result, token);
-      res.send({ token });
-    });
-
-    app.get("/users/:email", async (req, res) => {
-      const email = req.params.email;
+      const oldUser = await usersCollection.findOne({ email: email });
+      if (!oldUser) {
+        const newUser = req.body;
+        const result = await usersCollection.insertOne(newUser);
+      }
       const token = await jwt.sign({ email }, process.env.DealX_Token, {
         expiresIn: "7d",
       });
       res.send({ token });
     });
-
     app.post("/products", async (req, res) => {
       const newProduct = req.body;
       const result = await productsCollection.insertOne(newProduct);
-      console.log(result);
       res.send(result);
     });
   } catch (error) {
