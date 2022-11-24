@@ -14,13 +14,23 @@ const client = new MongoClient(uri, {
   useUnifiedTopology: true,
   serverApi: ServerApiVersion.v1,
 });
-console.log(uri);
 const run = () => {
   try {
     const categoryCollection = client.db("dealX").collection("categories");
+    const usersCollection = client.db("dealX").collection("users");
     app.get("/categories", async (req, res) => {
       const categories = await categoryCollection.find({}).toArray();
       res.send(categories);
+    });
+    app.post("/users/:email", async (req, res) => {
+      const email = req.params.email;
+      const newUser = req.body;
+      const result = await usersCollection.insertOne(newUser);
+      const token = await jwt.sign({ email }, process.env.DealX_Token, {
+        expiresIn: "7d",
+      });
+      console.log(result, token);
+      res.send({ token });
     });
   } catch (error) {
     console.log(error.message);
