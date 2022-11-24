@@ -18,6 +18,7 @@ const run = () => {
   try {
     const categoryCollection = client.db("dealX").collection("categories");
     const usersCollection = client.db("dealX").collection("users");
+    const productsCollection = client.db("dealX").collection("products");
     app.get("/categories", async (req, res) => {
       const categories = await categoryCollection.find({}).toArray();
       res.send(categories);
@@ -32,12 +33,20 @@ const run = () => {
       console.log(result, token);
       res.send({ token });
     });
+
     app.get("/users/:email", async (req, res) => {
       const email = req.params.email;
       const token = await jwt.sign({ email }, process.env.DealX_Token, {
         expiresIn: "7d",
       });
       res.send({ token });
+    });
+
+    app.post("/products", async (req, res) => {
+      const newProduct = req.body;
+      const result = await productsCollection.insertOne(newProduct);
+      console.log(result);
+      res.send(result);
     });
   } catch (error) {
     console.log(error.message);
