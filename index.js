@@ -2,7 +2,7 @@ const express = require("express");
 const cors = require("cors");
 require("dotenv").config();
 const jwt = require("jsonwebtoken");
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const port = process.env.PORT || 5000;
 const app = express();
 app.use(cors());
@@ -40,6 +40,7 @@ const run = () => {
     const categoryCollection = client.db("dealX").collection("categories");
     const usersCollection = client.db("dealX").collection("users");
     const productsCollection = client.db("dealX").collection("products");
+    const bookingsCollection = client.db("dealX").collection("bookings");
     app.get("/categories", async (req, res) => {
       const categories = await categoryCollection.find({}).toArray();
       res.send(categories);
@@ -62,7 +63,18 @@ const run = () => {
       });
       res.send({ token });
     });
-
+    app.post("/bookings", async (req, res) => {
+      const booking = req.body;
+      const result = await bookingsCollection.insertOne(booking);
+      const filter = { _id: ObjectId(booking.productId) };
+      const updatedDoc = {
+        $set: {
+          status: "sold",
+        },
+      };
+      const updated = await productsCollection.updateOne(filter, updatedDoc);
+      res.send({ success: "Product Booked Successfully!" });
+    });
     app.get("/users/:email", verifyToken, async (req, res) => {
       const payload = req.query.payload;
       const decoded = req.decoded;
