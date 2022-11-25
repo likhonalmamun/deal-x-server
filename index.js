@@ -14,6 +14,27 @@ const client = new MongoClient(uri, {
   useUnifiedTopology: true,
   serverApi: ServerApiVersion.v1,
 });
+
+const verifyToken = (req, res, next) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader) {
+    return res.status(401).send({ message: "Unauthorized access" });
+  }
+  const token = authHeader.split(" ")[1];
+  // console.log()
+  if (token === "null") {
+    return res.status(401).send({ message: "Unauthorized access" });
+  }
+  jwt.verify(token, process.env.DealX_Token, (error, decoded) => {
+    if (error) {
+      return res.status(401).send({ message: "Unauthorized access" });
+    }
+    if (decoded) {
+      req.decoded = decoded;
+    }
+  });
+  next();
+};
 const run = () => {
   try {
     const categoryCollection = client.db("dealX").collection("categories");
@@ -33,6 +54,26 @@ const run = () => {
       const role = req.query.role;
       const users = await usersCollection.find({ role: role }).toArray();
       res.send(users);
+    });
+    app.get("/token/:email", async (req, res) => {
+      const email = req.params.email;
+      const token = await jwt.sign({ email }, process.env.DealX_Token, {
+        expiresIn: "7d",
+      });
+      res.send({ token });
+    });
+
+    app.get("/users/:email", verifyToken, async (req, res) => {
+      const payload = req.query.payload;
+      const decoded = req.decoded;
+      if (decoded.email === payload) {
+        const email = req.params.email;
+        const user = await usersCollection.findOne({ email: email });
+
+        res.send(user);
+      } else {
+        return res.status(401).send({ message: "Unauthorized access" });
+      }
     });
     app.get("/category/:id", async (req, res) => {
       const id = req.params.id;
