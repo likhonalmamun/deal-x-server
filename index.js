@@ -45,6 +45,13 @@ const run = () => {
       const categories = await categoryCollection.find({}).toArray();
       res.send(categories);
     });
+    app.get("/myOrders", async (req, res) => {
+      const email = req.query.email;
+      const orders = await bookingsCollection
+        .find({ buyerEmail: email })
+        .toArray();
+      res.send(orders);
+    });
     app.get("/myProducts", async (req, res) => {
       const myProducts = await productsCollection
         .find({ sellerEmail: req.query.email })
@@ -110,6 +117,18 @@ const run = () => {
       const newProduct = req.body;
       const result = await productsCollection.insertOne(newProduct);
       res.send(result);
+    });
+    app.patch("/products/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: ObjectId(id) };
+      const updatedDoc = {
+        $set: {
+          reported: true,
+        },
+      };
+      const result = await productsCollection.updateOne(filter, updatedDoc);
+      // console.log(result);
+      res.send({ success: "Reported to admin" });
     });
   } catch (error) {
     console.log(error.message);
