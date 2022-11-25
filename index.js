@@ -58,6 +58,55 @@ const run = () => {
         .toArray();
       res.send(myProducts);
     });
+    app.get("/reported", async (req, res) => {
+      const products = await productsCollection
+        .find({ reported: true })
+        .toArray();
+      res.send(products);
+    });
+    app.delete("/users/:email", async (req, res) => {
+      const email = req.params.email;
+      const result = await usersCollection.deleteOne({ email: email });
+      const removeBookings = await bookingsCollection.deleteMany({
+        buyerEmail: email,
+      });
+      res.send({ success: "Successfully deleted the buyer and his orders!" });
+    });
+    app.patch("/verifySeller/:id", async (req, res) => {
+      const id = ObjectId(req.params.id);
+      const filter = { _id: id };
+      const updatedDoc = {
+        $set: {
+          verified: true,
+        },
+      };
+      const result = await usersCollection.updateOne(filter, updatedDoc);
+      res.send({ success: "Seller verified successfully" });
+    });
+    app.delete("/products/:id", async (req, res) => {
+      const id = req.params.id;
+      const result = await productsCollection.deleteOne({ _id: ObjectId(id) });
+      const removeBookings = await bookingsCollection.deleteMany({
+        productId: id,
+      });
+      res.send({ success: "Successfully deleted the buyer and his orders!" });
+    });
+    app.patch("/ad/:id", async (req, res) => {
+      const filter = { _id: ObjectId(req.params.id) };
+      const updatedDoc = {
+        $set: {
+          advertised: true,
+        },
+      };
+      const result = await productsCollection.updateOne(filter, updatedDoc);
+      res.send({ success: "This product is advertised !!" });
+    });
+    app.get("/ad", async (req, res) => {
+      const products = await productsCollection
+        .find({ advertised: true })
+        .toArray();
+      res.send(products);
+    });
     app.get("/users", async (req, res) => {
       const role = req.query.role;
       const users = await usersCollection.find({ role: role }).toArray();
@@ -73,26 +122,12 @@ const run = () => {
     app.post("/bookings", async (req, res) => {
       const booking = req.body;
       const result = await bookingsCollection.insertOne(booking);
-      const filter = { _id: ObjectId(booking.productId) };
-      const updatedDoc = {
-        $set: {
-          status: "sold",
-        },
-      };
-      const updated = await productsCollection.updateOne(filter, updatedDoc);
       res.send({ success: "Product Booked Successfully!" });
     });
-    app.get("/users/:email", verifyToken, async (req, res) => {
-      const payload = req.query.payload;
-      const decoded = req.decoded;
-      if (decoded.email === payload) {
-        const email = req.params.email;
-        const user = await usersCollection.findOne({ email: email });
-
-        res.send(user);
-      } else {
-        return res.status(401).send({ message: "Unauthorized access" });
-      }
+    app.get("/users/:email", async (req, res) => {
+      const email = req.params.email;
+      const user = await usersCollection.findOne({ email: email });
+      res.send(user);
     });
     app.get("/category/:id", async (req, res) => {
       const id = req.params.id;
