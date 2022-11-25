@@ -91,6 +91,14 @@ const run = () => {
       });
       res.send({ success: "Successfully deleted the buyer and his orders!" });
     });
+    app.delete("/deleteSeller/:email", async (req, res) => {
+      const email = req.params.email;
+      const deleteSeller = await usersCollection.deleteOne({ email: email });
+      const deleteProducts = await productsCollection.deleteMany({
+        sellerEmail: email,
+      });
+      res.send({ success: "Seller and his product deleted successfully!" });
+    });
     app.patch("/ad/:id", async (req, res) => {
       const filter = { _id: ObjectId(req.params.id) };
       const updatedDoc = {
