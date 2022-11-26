@@ -45,8 +45,11 @@ const run = () => {
       const categories = await categoryCollection.find({}).toArray();
       res.send(categories);
     });
-    app.get("/myOrders", async (req, res) => {
+    app.get("/myOrders", verifyToken, async (req, res) => {
       const email = req.query.email;
+      if (email !== req.decoded.email) {
+        return res.status(401).send({ message: "Unauthorized access" });
+      }
       const orders = await bookingsCollection
         .find({ buyerEmail: email })
         .toArray();
@@ -99,7 +102,10 @@ const run = () => {
       });
       res.send({ success: "Seller and his product deleted successfully!" });
     });
-    app.patch("/ad/:id", async (req, res) => {
+    app.patch("/ad/:id", verifyToken, async (req, res) => {
+      if (req.decoded.email !== req.query.email) {
+        return res.status(401).send({ message: "Unauthorized access" });
+      }
       const filter = { _id: ObjectId(req.params.id) };
       const updatedDoc = {
         $set: {
@@ -115,8 +121,11 @@ const run = () => {
         .toArray();
       res.send(products);
     });
-    app.get("/users", async (req, res) => {
-      const role = req.query.role;
+    app.get("/role/:role", verifyToken, async (req, res) => {
+      const role = req.params.role;
+      if (req.query.email !== req.decoded.email) {
+        return res.status(401).send({ message: "Unauthorized access" });
+      }
       const users = await usersCollection.find({ role: role }).toArray();
       res.send(users);
     });
